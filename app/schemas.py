@@ -5,6 +5,65 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 BudgetType = Literal["income", "expense"]
+FamilyRole = Literal["owner", "member"]
+
+
+class UserCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    password: str = Field(min_length=8, max_length=128)
+
+
+class UserLogin(BaseModel):
+    email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    password: str = Field(min_length=1, max_length=128)
+
+
+class UserRead(BaseModel):
+    id: int
+    name: str
+    email: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TokenRead(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserRead
+
+
+class FamilyCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
+class FamilyRead(BaseModel):
+    id: int
+    name: str
+    created_by_user_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FamilyMemberRead(BaseModel):
+    id: int
+    role: FamilyRole
+    created_at: datetime
+    user: UserRead
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FamilyInvite(BaseModel):
+    email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    role: FamilyRole = "member"
+
+
+class MeRead(BaseModel):
+    user: UserRead
+    families: list[FamilyRead]
 
 
 class EntryBase(BaseModel):
@@ -71,6 +130,7 @@ class CategoryReorderItem(BaseModel):
 
 class CategoryRead(CategoryBase):
     id: int
+    family_id: int | None
     position: int
     created_at: datetime
     entries: list[EntryRead] = []

@@ -32,3 +32,6 @@ If your local Postgres credentials are different, update `DATABASE_URL` in `.env
 - The app uses Postgres through SQLAlchemy.
 - Tables are created at startup for a simple local development workflow.
 - Update `DATABASE_URL` in `.env` if your Postgres credentials differ.
+- Registration creates a default family for the user.
+- Budget categories and entries are scoped to the active family.
+- Change `SECRET_KEY` in `.env` before using the app outside local development.
