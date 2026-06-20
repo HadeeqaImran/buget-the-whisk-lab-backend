@@ -9,11 +9,23 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-docker compose up -d
 uvicorn app.main:app --reload
 ```
 
 The API runs at `http://localhost:8000`.
+
+## Database
+
+Create a local Postgres database that matches `.env.example`:
+
+```bash
+createdb budget_db
+createuser budget
+psql -d budget_db -c "ALTER USER budget WITH PASSWORD 'budget';"
+psql -d budget_db -c "GRANT ALL PRIVILEGES ON DATABASE budget_db TO budget;"
+```
+
+If your local Postgres credentials are different, update `DATABASE_URL` in `.env`.
 
 ## Notes
 
