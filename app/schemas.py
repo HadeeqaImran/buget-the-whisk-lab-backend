@@ -49,7 +49,7 @@ class EntryRead(BaseModel):
 class CategoryBase(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     type: BudgetType
-    color: str = Field(default="#2563eb", max_length=24)
+    color: str = Field(default="#a7c7e7", max_length=24)
     monthly_target: Decimal = Field(default=0, ge=0, max_digits=12, decimal_places=2)
 
 

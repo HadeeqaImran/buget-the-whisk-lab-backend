@@ -13,7 +13,7 @@ class Category(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     type: Mapped[str] = mapped_column(String(12), nullable=False, index=True)
-    color: Mapped[str] = mapped_column(String(24), nullable=False, default="#2563eb")
+    color: Mapped[str] = mapped_column(String(24), nullable=False, default="#a7c7e7")
     monthly_target: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
