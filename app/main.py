@@ -2,13 +2,22 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth import create_access_token, get_current_user, hash_password, verify_password
 from app.config import get_settings
 from app.database import get_db, init_db
+from app.errors import (
+    database_exception_handler,
+    http_exception_handler,
+    integrity_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
 from app.models import BudgetEntry, Category, Family, FamilyMembership, User
 from app.schemas import (
     BudgetSummary,
@@ -31,6 +40,11 @@ from app.schemas import (
 )
 
 app = FastAPI(title="Household Budget API", version="1.0.0")
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(IntegrityError, integrity_exception_handler)
+app.add_exception_handler(SQLAlchemyError, database_exception_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 settings = get_settings()
 app.add_middleware(
