@@ -453,7 +453,7 @@ def get_summary(
     rows = db.execute(
         select(Category.type, func.coalesce(func.sum(BudgetEntry.amount), 0))
         .outerjoin(BudgetEntry, BudgetEntry.category_id == Category.id)
-        .where(Category.family_id == family.id)
+        .where(Category.family_id == family.id, Category.include_in_totals.is_(True))
         .group_by(Category.type)
     ).all()
     totals = {budget_type: Decimal(amount) for budget_type, amount in rows}

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -66,6 +66,7 @@ class Category(Base):
     type: Mapped[str] = mapped_column(String(12), nullable=False, index=True)
     color: Mapped[str] = mapped_column(String(24), nullable=False, default="#a7c7e7")
     monthly_target: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    include_in_totals: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

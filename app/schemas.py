@@ -147,6 +147,7 @@ class CategoryBase(BaseModel):
     type: BudgetType
     color: str = Field(default="#a7c7e7", max_length=24)
     monthly_target: Decimal = Field(default=0, ge=0, max_digits=12, decimal_places=2)
+    include_in_totals: bool = True
 
 
 class CategoryCreate(CategoryBase):
@@ -157,6 +158,7 @@ class CategoryUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=80)
     color: str | None = Field(default=None, max_length=24)
     monthly_target: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
+    include_in_totals: bool | None = None
     position: int | None = Field(default=None, ge=0)
 
 

@@ -42,6 +42,11 @@ def ensure_schema_updates() -> None:
         return
 
     category_columns = {column["name"] for column in inspector.get_columns("categories")}
+    if "include_in_totals" not in category_columns:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE categories ADD COLUMN include_in_totals BOOLEAN NOT NULL DEFAULT TRUE"))
+        category_columns.add("include_in_totals")
+
     if "family_id" not in category_columns:
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE categories ADD COLUMN family_id INTEGER REFERENCES families(id)"))
