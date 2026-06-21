@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://budget:budget@localhost:5432/budget_db"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    cors_origin_regex: str | None = None
     secret_key: str = "change-this-local-development-secret"
     access_token_expire_minutes: int = 60 * 24 * 7
 

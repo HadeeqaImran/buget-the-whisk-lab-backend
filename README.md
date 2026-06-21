@@ -93,6 +93,7 @@ Then create a Render Postgres database and add these web service environment var
 ```txt
 DATABASE_URL=<Render Postgres connection string>
 CORS_ORIGINS=https://your-frontend-domain.com
+CORS_ORIGIN_REGEX=^https://.*\.vercel\.app$
 SECRET_KEY=<long random secret>
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
 PYTHON_VERSION=3.13.5
