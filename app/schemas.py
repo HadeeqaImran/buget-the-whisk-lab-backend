@@ -28,6 +28,10 @@ class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
 class TokenRead(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -35,6 +39,10 @@ class TokenRead(BaseModel):
 
 
 class FamilyCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
+class FamilyUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
 
 

@@ -33,10 +33,13 @@ from app.schemas import (
     FamilyInvite,
     FamilyMemberRead,
     FamilyRead,
+    FamilyUpdate,
     MeRead,
     TokenRead,
     UserCreate,
     UserLogin,
+    UserRead,
+    UserUpdate,
 )
 
 app = FastAPI(title="Household Budget API", version="1.0.0")
@@ -171,6 +174,18 @@ def me(current_user: User = Depends(get_current_user), db: Session = Depends(get
     return MeRead(user=current_user, families=get_user_families(db, current_user))
 
 
+@app.patch("/auth/me", response_model=UserRead)
+def update_me(
+    payload: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    current_user.name = payload.name.strip()
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
 @app.get("/families", response_model=list[FamilyRead])
 def list_families(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> list[Family]:
     return get_user_families(db, current_user)
@@ -186,6 +201,21 @@ def create_family(
     db.add(family)
     db.flush()
     db.add(FamilyMembership(user_id=current_user.id, family_id=family.id, role="owner"))
+    db.commit()
+    db.refresh(family)
+    return family
+
+
+@app.patch("/families/{family_id}", response_model=FamilyRead)
+def update_family(
+    family_id: int,
+    payload: FamilyUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Family:
+    require_owner_membership(db, current_user, family_id)
+    family = require_family(db, current_user, family_id)
+    family.name = payload.name.strip()
     db.commit()
     db.refresh(family)
     return family
