@@ -221,6 +221,18 @@ def update_family(
     return family
 
 
+@app.delete("/families/{family_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_family(
+    family_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    require_owner_membership(db, current_user, family_id)
+    family = require_family(db, current_user, family_id)
+    db.delete(family)
+    db.commit()
+
+
 @app.get("/families/{family_id}/members", response_model=list[FamilyMemberRead])
 def list_family_members(
     family_id: int,
