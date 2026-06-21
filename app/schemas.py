@@ -6,6 +6,33 @@ from pydantic import BaseModel, ConfigDict, Field
 
 BudgetType = Literal["income", "expense"]
 FamilyRole = Literal["owner", "member"]
+CurrencyCode = Literal[
+    "USD",
+    "EUR",
+    "GBP",
+    "CAD",
+    "AUD",
+    "NZD",
+    "CHF",
+    "JPY",
+    "CNY",
+    "HKD",
+    "SGD",
+    "AED",
+    "SAR",
+    "QAR",
+    "KWD",
+    "PKR",
+    "INR",
+    "BDT",
+    "LKR",
+    "NPR",
+    "ZAR",
+    "NGN",
+    "KES",
+    "BRL",
+    "MXN",
+]
 
 
 class UserCreate(BaseModel):
@@ -23,13 +50,15 @@ class UserRead(BaseModel):
     id: int
     name: str
     email: str
+    currency_code: CurrencyCode
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdate(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    currency_code: CurrencyCode | None = None
 
 
 class TokenRead(BaseModel):

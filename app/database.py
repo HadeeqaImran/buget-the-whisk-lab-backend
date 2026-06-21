@@ -31,7 +31,14 @@ def init_db() -> None:
 
 def ensure_schema_updates() -> None:
     inspector = inspect(engine)
-    if "categories" not in inspector.get_table_names():
+    table_names = inspector.get_table_names()
+    if "users" in table_names:
+        user_columns = {column["name"] for column in inspector.get_columns("users")}
+        if "currency_code" not in user_columns:
+            with engine.begin() as connection:
+                connection.execute(text("ALTER TABLE users ADD COLUMN currency_code VARCHAR(3) NOT NULL DEFAULT 'USD'"))
+
+    if "categories" not in table_names:
         return
 
     category_columns = {column["name"] for column in inspector.get_columns("categories")}

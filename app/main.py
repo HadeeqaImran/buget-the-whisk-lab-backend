@@ -181,7 +181,11 @@ def update_me(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> User:
-    current_user.name = payload.name.strip()
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data and data["name"] is not None:
+        current_user.name = data["name"].strip()
+    if "currency_code" in data and data["currency_code"] is not None:
+        current_user.currency_code = data["currency_code"]
     db.commit()
     db.refresh(current_user)
     return current_user
