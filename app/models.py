@@ -87,6 +87,7 @@ class BudgetEntry(Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     occurrence_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    include_in_totals: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

@@ -41,6 +41,12 @@ def ensure_schema_updates() -> None:
     if "categories" not in table_names:
         return
 
+    if "budget_entries" in table_names:
+        entry_columns = {column["name"] for column in inspector.get_columns("budget_entries")}
+        if "include_in_totals" not in entry_columns:
+            with engine.begin() as connection:
+                connection.execute(text("ALTER TABLE budget_entries ADD COLUMN include_in_totals BOOLEAN NOT NULL DEFAULT TRUE"))
+
     category_columns = {column["name"] for column in inspector.get_columns("categories")}
     if "include_in_totals" not in category_columns:
         with engine.begin() as connection:

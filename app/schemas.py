@@ -107,6 +107,7 @@ class EntryBase(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     amount: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
     occurrence_date: date | None = None
+    include_in_totals: bool = True
     notes: str | None = Field(default=None, max_length=500)
 
 
@@ -118,6 +119,7 @@ class EntryUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=120)
     amount: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
     occurrence_date: date | None = None
+    include_in_totals: bool | None = None
     notes: str | None = Field(default=None, max_length=500)
     category_id: int | None = None
     position: int | None = Field(default=None, ge=0)
@@ -134,6 +136,7 @@ class EntryRead(BaseModel):
     title: str
     amount: Decimal
     occurrence_date: date
+    include_in_totals: bool
     notes: str | None
     position: int
     created_at: datetime
