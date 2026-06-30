@@ -5,8 +5,8 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session, selectinload, with_loader_criteria
 
 from app.auth import create_access_token, get_current_user, hash_password, verify_password
 from app.config import get_settings
@@ -135,6 +135,23 @@ def require_entry(db: Session, user: User, entry_id: int) -> BudgetEntry:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
     require_category(db, user, entry.category_id)
     return entry
+
+
+def validate_date_range(start_date: date | None, end_date: date | None) -> None:
+    if start_date is not None and end_date is not None and start_date > end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="start_date must be on or before end_date",
+        )
+
+
+def entry_date_filters(start_date: date | None, end_date: date | None) -> list:
+    filters = []
+    if start_date is not None:
+        filters.append(BudgetEntry.occurrence_date >= start_date)
+    if end_date is not None:
+        filters.append(BudgetEntry.occurrence_date <= end_date)
+    return filters
 
 
 def create_default_family(db: Session, user: User) -> Family:
@@ -283,14 +300,22 @@ def invite_family_member(
 @app.get("/categories", response_model=list[CategoryRead])
 def list_categories(
     family_id: int | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[Category]:
+    validate_date_range(start_date, end_date)
     family = require_family(db, current_user, family_id)
+    filters = entry_date_filters(start_date, end_date)
+    options = [selectinload(Category.entries)]
+    if filters:
+        options.append(with_loader_criteria(BudgetEntry, and_(*filters), include_aliases=True))
+
     return list(
         db.scalars(
             select(Category)
-            .options(selectinload(Category.entries))
+            .options(*options)
             .where(Category.family_id == family.id)
             .order_by(Category.type, Category.position, Category.created_at)
         )
@@ -330,7 +355,26 @@ def update_category(
 ) -> Category:
     category = require_category(db, current_user, category_id)
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    next_type = data.pop("type", None)
+    position_was_provided = "position" in data
+
+    if next_type is not None and next_type != category.type:
+        category.type = next_type
+        if not position_was_provided:
+            category.position = (
+                db.scalar(
+                    select(func.coalesce(func.max(Category.position), -1)).where(
+                        Category.type == next_type,
+                        Category.family_id == category.family_id,
+                    )
+                )
+                + 1
+            )
+
+    for field, value in data.items():
+        if field == "name" and value is not None:
+            value = value.strip()
         setattr(category, field, value)
 
     db.commit()
@@ -367,7 +411,7 @@ def reorder_categories(
             category.position = item.position
 
     db.commit()
-    return list_categories(family.id, current_user, db)
+    return list_categories(family_id=family.id, current_user=current_user, db=db)
 
 
 @app.post("/entries", response_model=EntryRead, status_code=status.HTTP_201_CREATED)
@@ -404,10 +448,23 @@ def update_entry(
     entry = require_entry(db, current_user, entry_id)
 
     data = payload.model_dump(exclude_unset=True)
-    if "category_id" in data:
-        require_category(db, current_user, data["category_id"])
+    next_category_id = data.get("category_id")
+    position_was_provided = "position" in data
+    if next_category_id is not None:
+        require_category(db, current_user, next_category_id)
+        if next_category_id != entry.category_id and not position_was_provided:
+            entry.position = (
+                db.scalar(
+                    select(func.coalesce(func.max(BudgetEntry.position), -1)).where(
+                        BudgetEntry.category_id == next_category_id
+                    )
+                )
+                + 1
+            )
 
     for field, value in data.items():
+        if field == "title" and value is not None:
+            value = value.strip()
         setattr(entry, field, value)
 
     db.commit()
@@ -446,10 +503,14 @@ def delete_entry(
 @app.get("/summary", response_model=BudgetSummary)
 def get_summary(
     family_id: int | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> BudgetSummary:
+    validate_date_range(start_date, end_date)
     family = require_family(db, current_user, family_id)
+    filters = entry_date_filters(start_date, end_date)
     rows = db.execute(
         select(Category.type, func.coalesce(func.sum(BudgetEntry.amount), 0))
         .outerjoin(BudgetEntry, BudgetEntry.category_id == Category.id)
@@ -457,6 +518,7 @@ def get_summary(
             Category.family_id == family.id,
             Category.include_in_totals.is_(True),
             BudgetEntry.include_in_totals.is_(True),
+            *filters,
         )
         .group_by(Category.type)
     ).all()
